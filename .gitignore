@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Office temp files
+~$*
+
+# Docs (not needed for web)
+*.pdf
+*.docx
+*.xlsx
+
+# Keep only the web app
