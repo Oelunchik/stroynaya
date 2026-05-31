@@ -381,6 +381,37 @@
   .ok { background: #f0fff4; color: #276749; }
   .no { background: #fff0f0; color: #c53030; }
 
+  /* WEEK NAV */
+  .week-nav {
+    display: flex;
+    background: white;
+    border-radius: 16px;
+    padding: 5px;
+    margin-bottom: 12px;
+    gap: 4px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .week-tab {
+    flex: 1;
+    padding: 9px 4px;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: #bbb;
+    background: transparent;
+    transition: all 0.2s;
+    line-height: 1.3;
+  }
+  .week-tab.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 2px 10px rgba(118,75,162,0.28);
+  }
+  .week-tab.has-today { color: #764ba2; }
+  .week-tab.has-today.active { color: white; }
+
   /* PAGE toggle */
   .page { display: none; }
   .page.active { display: block; }
@@ -418,6 +449,9 @@
 
   <!-- ══ ПИТАНИЕ ══════════════════════════════════════════ -->
   <div class="page active" id="page-plan">
+
+    <!-- ВКЛАДКИ НЕДЕЛЬ -->
+    <div class="week-nav" id="weekNav"></div>
 
     <!-- НАПОМИНАНИЯ -->
     <div class="reminders">
@@ -626,91 +660,211 @@ const PLANS = {
   }
 };
 
-// JS getDay(): 0=Вс,1=Пн,...,6=Сб → переводим в нашу (0=Пн..6=Вс)
-function jsDay2idx(jsDay){ return jsDay === 0 ? 6 : jsDay - 1; }
+// ─── НЕДЕЛЯ 2 — ПЛАНЫ ───────────────────────────────────────────────
+const W2 = {
+  pn: {
+    label: "Творог",
+    total: 1330,
+    meals: [
+      { name: "Завтрак", kcal: 498, items: [
+        { n: "Сдобрянка Батон",                   a: "50 г",          k: 110 },
+        { n: "Оливковое масло",                   a: "2 ч.л.",        k: 80  },
+        { n: "Яйцо",                              a: "3 средних",     k: 194 },
+        { n: "Президент Творог Рассыпчатый 0,2%", a: "200 г",         k: 114 },
+      ]},
+      { name: "Обед", kcal: 356, items: [
+        { n: "Зеленый листовой салат",            a: "50 г",          k: 8   },
+        { n: "Соевый соус",                       a: "1 ст.л.",       k: 8   },
+        { n: "Простоквашино Греческий йогурт",    a: "40 г",          k: 26  },
+        { n: "Помидоры",                          a: "100 г",         k: 18  },
+        { n: "Огурец",                            a: "100 г",         k: 15  },
+        { n: "Лаваш Хлебный Дом Армянский",       a: "50 г",          k: 107 },
+        { n: "Funny Fish Креветки очищенные",     a: "200 г",         k: 174 },
+      ]},
+      { name: "Ужин", kcal: 476, items: [
+        { n: "Рис",                               a: "40 г (сухой)",  k: 132 },
+        { n: "Чеснок",                            a: "1 долька",      k: 4   },
+        { n: "4 Сезона Овощная смесь деревенская",a: "100 г",         k: 50  },
+        { n: "Оливковое масло",                   a: "2 ч.л.",        k: 80  },
+        { n: "Филе бедра куриного",               a: "150 г (сырое)", k: 210 },
+      ]},
+    ]
+  },
+  vt: {
+    label: "Овсянка",
+    total: 1328,
+    meals: [
+      { name: "Завтрак", kcal: 440, items: [
+        { n: "Сгущенка",                          a: "20 г",          k: 64  },
+        { n: "Оливковое масло",                   a: "2 ч.л.",        k: 80  },
+        { n: "Банан",                             a: "100 г",         k: 89  },
+        { n: "Яйцо",                              a: "1 средний",     k: 65  },
+        { n: "Геркулес Овсяные хлопья",           a: "40 г",          k: 142 },
+      ]},
+      { name: "Обед", kcal: 422, items: [
+        { n: "Чеснок",                            a: "2 дольки",      k: 9   },
+        { n: "Простоквашино Греческий йогурт",    a: "70 г",          k: 45  },
+        { n: "Зеленый лук",                       a: "30 г",          k: 10  },
+        { n: "Укроп",                             a: "30 г",          k: 13  },
+        { n: "Болгарский перец",                  a: "200 г",         k: 52  },
+        { n: "Помидоры",                          a: "100 г",         k: 18  },
+        { n: "Куриное филе",                      a: "250 г (сырое)", k: 275 },
+      ]},
+      { name: "Ужин", kcal: 466, items: [
+        { n: "Оливковое масло",                   a: "1 ч.л.",        k: 40  },
+        { n: "4 Сезона Овощная смесь Летние овощи",a:"100 г",         k: 47  },
+        { n: "Говядина постная",                  a: "150 г (сырая)", k: 235 },
+        { n: "Barilla Спагетти #5",               a: "40 г (сухие)",  k: 144 },
+      ]},
+    ]
+  },
+  sr: {
+    label: "Хрутка",
+    total: 1316,
+    meals: [
+      { name: "Завтрак", kcal: 413, items: [
+        { n: "Молоко Домик в деревне 2,5%",       a: "150 мл",        k: 81  },
+        { n: "Nestle Кукурузные хлопья Хрутка",   a: "90 г",          k: 332 },
+      ]},
+      { name: "Обед", kcal: 503, items: [
+        { n: "Чеснок",                            a: "3 дольки",      k: 13  },
+        { n: "Куриное филе",                      a: "170 г (сырое)", k: 187 },
+        { n: "Оливковое масло",                   a: "2 ч.л.",        k: 80  },
+        { n: "Лук",                               a: "70 г",          k: 29  },
+        { n: "Морковь",                           a: "70 г",          k: 29  },
+        { n: "Рис",                               a: "50 г (сухой)",  k: 165 },
+      ]},
+      { name: "Ужин", kcal: 400, items: [
+        { n: "Оливковое масло",                   a: "1 ч.л.",        k: 40  },
+        { n: "Картошка варёная",                  a: "150 г",         k: 123 },
+        { n: "Лук",                               a: "50 г",          k: 21  },
+        { n: "Кабачок",                           a: "150 г",         k: 27  },
+        { n: "Помидоры",                          a: "150 г",         k: 27  },
+        { n: "Минтай",                            a: "200 г (сырой)", k: 162 },
+      ]},
+    ]
+  },
+};
 
-// Цикл 6 дней, старт 27 мая 2026 (среда):
-// дни 0,1 → mon (Ламбер)   Ср+Чт
-// дни 2,3 → wed (Snickers) Пт+Сб
-// дни 4,5 → tue (батон)    Вс+Пн
-// затем повтор
-const PROGRAM_START = new Date('2026-05-27T00:00:00');
-function getPlanKey(date){
-  const ms   = new Date(date.getFullYear(), date.getMonth(), date.getDate()) - PROGRAM_START;
-  const day  = Math.floor(ms / 86400000);
-  const pos  = ((day % 6) + 6) % 6;
-  if (pos < 2) return 'mon';
-  if (pos < 4) return 'wed';
-  return 'tue';
-}
+// ─── РАСПИСАНИЕ: дата → план ─────────────────────────────────────────
+const SCHEDULE = {
+  // Неделя 1
+  '2026-05-27': PLANS.mon, '2026-05-28': PLANS.mon,
+  '2026-05-29': PLANS.wed, '2026-05-30': PLANS.wed,
+  '2026-05-31': PLANS.tue,
+  // Неделя 2
+  '2026-06-01': PLANS.tue,
+  '2026-06-02': W2.pn,     '2026-06-03': W2.pn,
+  '2026-06-04': W2.vt,     '2026-06-05': W2.vt,
+  '2026-06-06': W2.sr,     '2026-06-07': W2.sr,
+};
+function getPlan(ds){ return SCHEDULE[ds] || null; }
 
-const DAY_SHORT = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
-const DAY_FULL  = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
-const MONTHS    = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-const MONTHS_GEN= ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+// ─── НЕДЕЛИ ─────────────────────────────────────────────────────────
+const WEEKS = [
+  { label:'Неделя 1', dates:['2026-05-27','2026-05-28','2026-05-29','2026-05-30','2026-05-31'] },
+  { label:'Неделя 2', dates:['2026-06-01','2026-06-02','2026-06-03','2026-06-04','2026-06-05','2026-06-06','2026-06-07'] },
+  { label:'Неделя 3', dates:['2026-06-08','2026-06-09','2026-06-10','2026-06-11','2026-06-12','2026-06-13','2026-06-14'], soon:true },
+  { label:'Неделя 4', dates:['2026-06-15','2026-06-16','2026-06-17','2026-06-18','2026-06-19','2026-06-20','2026-06-21'], soon:true },
+];
+
+const DAY_SHORT  = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const DAY_FULL   = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
+const MONTHS     = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
 // ─── СОСТОЯНИЕ ──────────────────────────────────────────────────────
 const today    = new Date();
-const todayIdx = jsDay2idx(today.getDay()); // 0..6, 0=Пн
-let   selIdx   = todayIdx;
+const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-// Базовая дата недели: ближайший понедельник назад
-function getMondayOfWeek(d){
-  const day = d.getDay(); // 0=Вс
-  const diff = day === 0 ? -6 : 1 - day;
-  const mon = new Date(d);
-  mon.setDate(d.getDate() + diff);
-  return mon;
+// Найти текущую неделю
+let curWeek = 0;
+for(let i = 0; i < WEEKS.length; i++){
+  if(WEEKS[i].dates.includes(todayStr)){ curWeek = i; break; }
 }
-const weekMonday = getMondayOfWeek(today);
+let selDate = WEEKS[curWeek].dates.includes(todayStr) ? todayStr : WEEKS[curWeek].dates[0];
 
-function dateOfIdx(i){
-  const d = new Date(weekMonday);
-  d.setDate(weekMonday.getDate() + i);
-  return d;
+function dayIdx(dateStr){
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.getDay() === 0 ? 6 : d.getDay() - 1; // 0=Пн..6=Вс
+}
+
+// ─── РЕНДЕР ВКЛАДОК НЕДЕЛЬ ──────────────────────────────────────────
+function renderWeekNav(){
+  const nav = document.getElementById('weekNav');
+  nav.innerHTML = '';
+  WEEKS.forEach((w, i) => {
+    const hasToday = w.dates.includes(todayStr);
+    const btn = document.createElement('button');
+    btn.className = 'week-tab' +
+      (i === curWeek ? ' active' : '') +
+      (hasToday ? ' has-today' : '');
+    btn.innerHTML = w.label + (hasToday ? '<br>★' : '');
+    btn.addEventListener('click', () => {
+      curWeek = i;
+      selDate = WEEKS[i].dates.includes(todayStr) ? todayStr : WEEKS[i].dates[0];
+      renderWeekNav(); renderDays(); renderPlan();
+    });
+    nav.appendChild(btn);
+  });
 }
 
 // ─── РЕНДЕР ПОЛОСЫ ДНЕЙ ─────────────────────────────────────────────
 function renderDays(){
-  const row = document.getElementById('daysRow');
+  const week = WEEKS[curWeek];
+  const row  = document.getElementById('daysRow');
+  row.style.gridTemplateColumns = `repeat(${week.dates.length}, 1fr)`;
   row.innerHTML = '';
-  for(let i = 0; i < 7; i++){
-    const d    = dateOfIdx(i);
-    const plan = PLANS[getPlanKey(d)];
-    const isToday = i === todayIdx;
-    const isSel   = i === selIdx;
-
+  week.dates.forEach(ds => {
+    const plan    = getPlan(ds);
+    const isToday = ds === todayStr;
+    const isSel   = ds === selDate;
+    const d       = new Date(ds + 'T00:00:00');
     const btn = document.createElement('button');
     btn.className = 'day-btn' +
-      (isSel   ? ' active'    : '') +
-      (isToday ? ' today-mark': '');
+      (isSel   ? ' active'     : '') +
+      (isToday ? ' today-mark' : '');
     btn.innerHTML = `
-      <span class="day-name">${DAY_SHORT[i]}</span>
+      <span class="day-name">${DAY_SHORT[dayIdx(ds)]}</span>
       <span class="day-date">${d.getDate()}</span>
-      <span class="day-plan-tag">${plan.label.slice(0,3)}</span>
+      <span class="day-plan-tag">${plan ? plan.label.slice(0,3) : '—'}</span>
       <span class="day-today-dot"></span>
     `;
-    btn.addEventListener('click', () => { selIdx = i; renderDays(); renderPlan(); });
+    btn.addEventListener('click', () => { selDate = ds; renderDays(); renderPlan(); });
     row.appendChild(btn);
-  }
+  });
 }
 
 // ─── РЕНДЕР ПЛАНА ───────────────────────────────────────────────────
 function renderPlan(){
-  const d    = dateOfIdx(selIdx);
-  const plan = PLANS[getPlanKey(d)];
-  const isToday = selIdx === todayIdx;
+  const week = WEEKS[curWeek];
+  const card = document.getElementById('planCard');
 
+  if(week.soon){
+    card.innerHTML = `<div style="text-align:center;padding:36px 20px;color:#bbb;">
+      <div style="font-size:40px;margin-bottom:14px;">📋</div>
+      <div style="font-size:16px;font-weight:800;color:#999;margin-bottom:8px;">Меню ещё не пришло</div>
+      <div style="font-size:13px;">Тренер пришлёт план на эту неделю</div>
+    </div>`;
+    return;
+  }
+
+  const plan    = getPlan(selDate);
+  if(!plan){
+    card.innerHTML = `<div style="text-align:center;padding:24px;color:#ccc;">Нет плана на этот день</div>`;
+    return;
+  }
+
+  const d       = new Date(selDate + 'T00:00:00');
+  const isToday = selDate === todayStr;
   let h = `<div class="plan-header">
-    <div class="plan-title">${DAY_FULL[selIdx]} · ${d.getDate()} ${MONTHS[d.getMonth()]}
+    <div class="plan-title">${DAY_FULL[dayIdx(selDate)]} · ${d.getDate()} ${MONTHS[d.getMonth()]}
       ${isToday ? ' <span style="font-size:12px;color:#764ba2;">— сегодня</span>' : ''}
     </div>
     <div class="kcal-total">${plan.total} ккал</div>
   </div>`;
 
-  if(plan.special){
-    h += `<div class="special-note">${plan.special}</div>`;
-  }
+  if(plan.special) h += `<div class="special-note">${plan.special}</div>`;
 
   plan.meals.forEach(meal => {
     h += `<div class="meal-block">
@@ -728,11 +882,9 @@ function renderPlan(){
     h += `</div>`;
   });
 
-  if(plan.wedNote){
-    h += `<div class="wed-note">📅 <b>Среда — день замеров!</b> Не забудь взвеситься и измерить объёмы утром натощак</div>`;
-  }
+  if(plan.wedNote) h += `<div class="wed-note">📅 <b>Среда — день замеров!</b> Не забудь взвеситься и измерить объёмы утром натощак</div>`;
 
-  document.getElementById('planCard').innerHTML = h;
+  card.innerHTML = h;
 }
 
 // ─── КОРЗИНА ────────────────────────────────────────────────────────
@@ -808,7 +960,7 @@ function showPage(name, btn){
 function renderHeader(){
   const d = today;
   document.getElementById('todayBadge').textContent =
-    DAY_FULL[todayIdx] + ', ' + d.getDate() + ' ' + MONTHS_GEN[d.getMonth()];
+    DAY_FULL[dayIdx(todayStr)] + ', ' + d.getDate() + ' ' + MONTHS_GEN[d.getMonth()];
 }
 
 // ─── ЗАМЕРЫ — localStorage ───────────────────────────────────────────
@@ -979,6 +1131,7 @@ function deleteMeasure(idx){
 
 // ─── INIT ────────────────────────────────────────────────────────────
 renderHeader();
+renderWeekNav();
 renderDays();
 renderPlan();
 renderShop();
