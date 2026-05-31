@@ -430,6 +430,29 @@
   .week-tab.has-today { color: #764ba2; }
   .week-tab.has-today.active { color: white; }
 
+  /* SHARE BAR */
+  .share-bar {
+    display: flex; gap: 8px;
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid #f0ebff;
+  }
+  .share-btn {
+    flex: 1; padding: 11px 8px;
+    border: 2px solid #e8e0f5; border-radius: 12px;
+    background: white; color: #764ba2;
+    font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .share-btn:hover { background: #f3e5f5; border-color: #764ba2; }
+  .share-btn.primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white; border-color: transparent;
+  }
+  .share-btn.ok {
+    background: #48bb78 !important;
+    color: white !important; border-color: transparent !important;
+  }
+
   /* PAGE toggle */
   .page { display: none; }
   .page.active { display: block; }
@@ -905,6 +928,11 @@ function renderPlan(){
 
   if(plan.wedNote) h += `<div class="wed-note">📅 <b>Среда — день замеров!</b> Не забудь взвеситься и измерить объёмы утром натощак</div>`;
 
+  h += `<div class="share-bar">
+    <button class="share-btn primary" onclick="copyDay(this)">📋 Скопировать для няни</button>
+    <button class="share-btn" onclick="downloadDayDoc()">📄 Скачать Word</button>
+  </div>`;
+
   card.innerHTML = h;
 }
 
@@ -972,6 +1000,10 @@ function renderShop(){
       </label>`;
     });
   });
+  h += `<div class="share-bar" style="margin-top:18px;padding-top:14px;border-top:1px solid #f0ebff;">
+    <button class="share-btn primary" onclick="copyShop(this)">📋 Скопировать список</button>
+    <button class="share-btn" onclick="downloadShopDoc()">📄 Скачать Word</button>
+  </div>`;
   document.getElementById('shopList').innerHTML = h;
 }
 function toggleShop(id){
@@ -1161,6 +1193,63 @@ function deleteMeasure(idx){
   saveMeasures(data);
   renderMeasures();
 }
+
+// ─── ЭКСПОРТ ─────────────────────────────────────────────────────────
+function buildDayText(ds){
+  const plan = getPlan(ds);
+  if(!plan) return '';
+  const d  = new Date(ds + 'T00:00:00');
+  const di = dayIdx(ds);
+  let t = `🥗 МЕНЮ — ${DAY_FULL[di].toUpperCase()}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}\n`;
+  t += `Калорийность: ${plan.total} ккал\n\n`;
+  plan.meals.forEach(m => {
+    t += `━━━ ${m.name.toUpperCase()} (${m.kcal} ккал) ━━━\n`;
+    m.items.forEach(i => t += `• ${i.n} — ${i.a}\n`);
+    if(m.tip) t += `\n👨‍🍳 Как готовить:\n${m.tip}\n`;
+    t += '\n';
+  });
+  t += '──────────────────────\nmasscerano.fit · 1300 ккал/день';
+  return t;
+}
+
+function buildShopText(){
+  let t = '🛒 КОРЗИНА НА НЕДЕЛЮ\nmasscerano.fit · 1300 ккал/день\n\n';
+  SHOP.forEach(cat => {
+    t += `${cat.cat}\n`;
+    cat.items.forEach(i => t += `  ☐ ${i.n} — ${i.a}\n`);
+    t += '\n';
+  });
+  return t.trim();
+}
+
+function copyText(text, btn){
+  const orig = btn.innerHTML;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.classList.add('ok'); btn.innerHTML = '✅ Скопировано!';
+    setTimeout(() => { btn.classList.remove('ok'); btn.innerHTML = orig; }, 2200);
+  }).catch(() => { prompt('Скопируй вручную:', text); });
+}
+
+function downloadDoc(text, filename){
+  const lines = text.split('\n').map(l =>
+    l.startsWith('━') ? `<p><b>${l}</b></p>` :
+    l.startsWith('🥗') || l.startsWith('🛒') ? `<h2>${l}</h2>` :
+    l === '' ? '<br>' : `<p>${l}</p>`
+  ).join('');
+  const doc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><style>body{font-family:Arial;font-size:13pt;line-height:1.6}h2{color:#764ba2}b{color:#555}</style></head><body>${lines}</body></html>`;
+  const a = document.createElement('a');
+  a.href = 'data:application/msword;charset=utf-8,' + encodeURIComponent(doc);
+  a.download = filename + '.doc';
+  a.click();
+}
+
+function copyDay(btn){ copyText(buildDayText(selDate), btn); }
+function downloadDayDoc(){
+  const d = new Date(selDate + 'T00:00:00');
+  downloadDoc(buildDayText(selDate), `Меню_${d.getDate()}_${MONTHS[d.getMonth()]}`);
+}
+function copyShop(btn){ copyText(buildShopText(), btn); }
+function downloadShopDoc(){ downloadDoc(buildShopText(), 'Корзина_на_неделю'); }
 
 // ─── INIT ────────────────────────────────────────────────────────────
 renderHeader();
