@@ -399,6 +399,35 @@
   .ok { background: #f0fff4; color: #276749; }
   .no { background: #fff0f0; color: #c53030; }
 
+  /* MONTH NAV */
+  .month-nav {
+    display: flex;
+    background: #f3f0fa;
+    border-radius: 16px;
+    padding: 5px;
+    margin-bottom: 8px;
+    gap: 4px;
+  }
+  .month-tab {
+    flex: 1;
+    padding: 9px 6px;
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 800;
+    color: #bbb;
+    background: transparent;
+    transition: all 0.2s;
+  }
+  .month-tab.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 2px 10px rgba(118,75,162,0.28);
+  }
+  .month-tab.has-today { color: #764ba2; }
+  .month-tab.has-today.active { color: white; }
+
   /* WEEK NAV */
   .week-nav {
     display: flex;
@@ -490,6 +519,9 @@
 
   <!-- ══ ПИТАНИЕ ══════════════════════════════════════════ -->
   <div class="page active" id="page-plan">
+
+    <!-- ВКЛАДКИ МЕСЯЦЕВ -->
+    <div class="month-nav" id="monthNav"></div>
 
     <!-- ВКЛАДКИ НЕДЕЛЬ -->
     <div class="week-nav" id="weekNav"></div>
@@ -965,6 +997,38 @@ const W4 = {
   },
 };
 
+// ─── МЕСЯЦ 2, НЕДЕЛЯ 1 ───────────────────────────────────────────────
+const W5 = {
+  pn: {
+    label: "Пекинка",
+    total: 1319,
+    meals: [
+      { name: "Завтрак", kcal: 428, items: [
+        { n: "Брест-Литовск Сыр Лёгкий",          a: "50 г",          k: 144 },
+        { n: "Зелёный лук",                         a: "50 г",          k: 16  },
+        { n: "Лаваш тонкий",                        a: "50 г",          k: 119 },
+        { n: "Простоквашино Молоко 2,5%",           a: "50 г",          k: 28  },
+        { n: "Яйцо",                                a: "1 средний",     k: 65  },
+        { n: "President Творог 0,1% домашний",      a: "100 г",         k: 56  },
+      ]},
+      { name: "Обед", kcal: 459, items: [
+        { n: "Лук",                                 a: "50 г",          k: 21  },
+        { n: "Султан Бешбармак",                    a: "50 г (сухой)",  k: 172 },
+        { n: "Говядина постная",                    a: "170 г (сырая)", k: 266 },
+      ]},
+      { name: "Ужин", kcal: 432, items: [
+        { n: "Брест-Литовск Сыр Лёгкий",          a: "40 г",          k: 111 },
+        { n: "Горчица",                             a: "0,3 ч.л.",      k: 1   },
+        { n: "Простоквашино Греческий йогурт",     a: "70 г",          k: 45  },
+        { n: "Куриное филе",                        a: "150 г (сырое)", k: 165 },
+        { n: "Помидоры",                            a: "100 г",         k: 18  },
+        { n: "Яйцо варёное",                        a: "1 средний",     k: 68  },
+        { n: "Пекинская капуста",                   a: "150 г",         k: 24  },
+      ]},
+    ]
+  },
+};
+
 // ─── РАСПИСАНИЕ: дата → план ─────────────────────────────────────────
 const SCHEDULE = {
   // Неделя 1
@@ -986,31 +1050,38 @@ const SCHEDULE = {
   '2026-06-16': W4.pn,     '2026-06-17': W4.pn,
   '2026-06-18': W4.vt,     '2026-06-19': W4.vt,
   '2026-06-20': W4.sr,     '2026-06-21': W4.sr,
+  // ── Месяц 2, Неделя 1 ──
+  '2026-07-06': W5.pn,     '2026-07-07': W5.pn,     '2026-07-08': W5.pn,
 };
 function getPlan(ds){ return SCHEDULE[ds] || null; }
 
-// ─── НЕДЕЛИ ─────────────────────────────────────────────────────────
+// ─── МЕСЯЦЫ И НЕДЕЛИ ────────────────────────────────────────────────
+const MONTH_LABELS = ['Месяц 1', 'Месяц 2'];
 const WEEKS = [
-  { label:'Неделя 1', dates:['2026-05-27','2026-05-28','2026-05-29','2026-05-30','2026-05-31'] },
-  { label:'Неделя 2', dates:['2026-06-01','2026-06-02','2026-06-03','2026-06-04','2026-06-05','2026-06-06','2026-06-07'] },
-  { label:'Неделя 3', dates:['2026-06-08','2026-06-09','2026-06-10','2026-06-11','2026-06-12','2026-06-13','2026-06-14'] },
-  { label:'Неделя 4', dates:['2026-06-15','2026-06-16','2026-06-17','2026-06-18','2026-06-19','2026-06-20','2026-06-21'] },
+  // Месяц 1
+  { label:'Нед 1', month:0, dates:['2026-05-27','2026-05-28','2026-05-29','2026-05-30','2026-05-31'] },
+  { label:'Нед 2', month:0, dates:['2026-06-01','2026-06-02','2026-06-03','2026-06-04','2026-06-05','2026-06-06','2026-06-07'] },
+  { label:'Нед 3', month:0, dates:['2026-06-08','2026-06-09','2026-06-10','2026-06-11','2026-06-12','2026-06-13','2026-06-14'] },
+  { label:'Нед 4', month:0, dates:['2026-06-15','2026-06-16','2026-06-17','2026-06-18','2026-06-19','2026-06-20','2026-06-21'] },
+  // Месяц 2
+  { label:'Нед 1', month:1, dates:['2026-07-06','2026-07-07','2026-07-08','2026-07-09','2026-07-10','2026-07-11','2026-07-12'] },
 ];
 
 const DAY_SHORT  = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 const DAY_FULL   = ['Понедельник','Вторник','Среда','Четверг','Пятница','Суббота','Воскресенье'];
-const MONTHS     = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-const MONTHS_GEN = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const MON_ABBR   = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+const MON_GEN    = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
 
 // ─── СОСТОЯНИЕ ──────────────────────────────────────────────────────
 const today    = new Date();
 const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
 
-// Найти текущую неделю
-let curWeek = 0;
+// Найти текущую неделю и месяц
+let curWeek = WEEKS.length - 1;
 for(let i = 0; i < WEEKS.length; i++){
   if(WEEKS[i].dates.includes(todayStr)){ curWeek = i; break; }
 }
+let curMonth = WEEKS[curWeek].month;
 let selDate = WEEKS[curWeek].dates.includes(todayStr) ? todayStr : WEEKS[curWeek].dates[0];
 
 function dayIdx(dateStr){
@@ -1018,11 +1089,33 @@ function dayIdx(dateStr){
   return d.getDay() === 0 ? 6 : d.getDay() - 1; // 0=Пн..6=Вс
 }
 
+// ─── РЕНДЕР ВКЛАДОК МЕСЯЦЕВ ─────────────────────────────────────────
+function renderMonthNav(){
+  const nav = document.getElementById('monthNav');
+  nav.innerHTML = '';
+  MONTH_LABELS.forEach((label, mi) => {
+    const hasToday = WEEKS.some(w => w.month === mi && w.dates.includes(todayStr));
+    const btn = document.createElement('button');
+    btn.className = 'month-tab' +
+      (mi === curMonth ? ' active' : '') +
+      (hasToday ? ' has-today' : '');
+    btn.innerHTML = label + (hasToday ? ' ★' : '');
+    btn.addEventListener('click', () => {
+      curMonth = mi;
+      curWeek = WEEKS.findIndex(w => w.month === mi);
+      selDate = WEEKS[curWeek].dates.includes(todayStr) ? todayStr : WEEKS[curWeek].dates[0];
+      renderMonthNav(); renderWeekNav(); renderDays(); renderPlan();
+    });
+    nav.appendChild(btn);
+  });
+}
+
 // ─── РЕНДЕР ВКЛАДОК НЕДЕЛЬ ──────────────────────────────────────────
 function renderWeekNav(){
   const nav = document.getElementById('weekNav');
   nav.innerHTML = '';
   WEEKS.forEach((w, i) => {
+    if(w.month !== curMonth) return;
     const hasToday = w.dates.includes(todayStr);
     const btn = document.createElement('button');
     btn.className = 'week-tab' +
@@ -1087,7 +1180,7 @@ function renderPlan(){
   const d       = new Date(selDate + 'T00:00:00');
   const isToday = selDate === todayStr;
   let h = `<div class="plan-header">
-    <div class="plan-title">${DAY_FULL[dayIdx(selDate)]} · ${d.getDate()} ${MONTHS[d.getMonth()]}
+    <div class="plan-title">${DAY_FULL[dayIdx(selDate)]} · ${d.getDate()} ${MON_ABBR[d.getMonth()]}
       ${isToday ? ' <span style="font-size:12px;color:#764ba2;">— сегодня</span>' : ''}
     </div>
     <div class="kcal-total">${plan.total} ккал</div>
@@ -1213,7 +1306,7 @@ function showPage(name, btn){
 function renderHeader(){
   const d = today;
   document.getElementById('todayBadge').textContent =
-    DAY_FULL[dayIdx(todayStr)] + ', ' + d.getDate() + ' ' + MONTHS_GEN[d.getMonth()];
+    DAY_FULL[dayIdx(todayStr)] + ', ' + d.getDate() + ' ' + MON_GEN[d.getMonth()];
 }
 
 // ─── ЗАМЕРЫ — localStorage ───────────────────────────────────────────
@@ -1259,7 +1352,7 @@ function delta(v, base, unit){
 function formatDate(str){
   if(!str) return '—';
   const d = new Date(str + 'T00:00:00');
-  return d.getDate() + ' ' + MONTHS[d.getMonth()];
+  return d.getDate() + ' ' + MON_ABBR[d.getMonth()];
 }
 
 function renderMeasures(){
@@ -1388,7 +1481,7 @@ function buildDayText(ds){
   if(!plan) return '';
   const d  = new Date(ds + 'T00:00:00');
   const di = dayIdx(ds);
-  let t = `🥗 МЕНЮ — ${DAY_FULL[di].toUpperCase()}, ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}\n`;
+  let t = `🥗 МЕНЮ — ${DAY_FULL[di].toUpperCase()}, ${d.getDate()} ${MON_GEN[d.getMonth()]}\n`;
   t += `Калорийность: ${plan.total} ккал\n\n`;
   plan.meals.forEach(m => {
     t += `━━━ ${m.name.toUpperCase()} (${m.kcal} ккал) ━━━\n`;
@@ -1434,13 +1527,14 @@ function downloadDoc(text, filename){
 function copyDay(btn){ copyText(buildDayText(selDate), btn); }
 function downloadDayDoc(){
   const d = new Date(selDate + 'T00:00:00');
-  downloadDoc(buildDayText(selDate), `Меню_${d.getDate()}_${MONTHS[d.getMonth()]}`);
+  downloadDoc(buildDayText(selDate), `Меню_${d.getDate()}_${MON_ABBR[d.getMonth()]}`);
 }
 function copyShop(btn){ copyText(buildShopText(), btn); }
 function downloadShopDoc(){ downloadDoc(buildShopText(), 'Корзина_на_неделю'); }
 
 // ─── INIT ────────────────────────────────────────────────────────────
 renderHeader();
+renderMonthNav();
 renderWeekNav();
 renderDays();
 renderPlan();
